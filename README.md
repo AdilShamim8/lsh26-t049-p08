@@ -8,7 +8,7 @@ Solution for **LofiStack Hackathon 2026 — P08**
 - **Team ID:** `LSH26-T049`
 - **Problem:** `P08 — School Result Processing and GPA Engine`
 - **Repository:** [`lsh26-t049-p08`](https://github.com/AdilShamim8/lsh26-t049-p08)
-- **Live application:** <https://preview-chat-6f6d073c-f828-4241-b7af-b2e4c5e67f28.space-z.ai/>
+- **Live application:** <https://lsh26-t049-p08.space-z.ai/>
 - **Demo video:** Not supplied (optional)
 
 > Judges will evaluate only the exact commit SHA entered in the Final Submission Form.
