@@ -1,0 +1,96 @@
+{
+  "team_id": "LSH26-T049",
+  "problem_id": "P08",
+  "repository_name": "lsh26-t049-p08",
+  "live_url": "https://preview-chat-6f6d073c-f828-4241-b7af-b2e4c5e67f28.space-z.ai/",
+  "demo_video_url_optional": "",
+  "event_start_code": "LSH26-8490-C900",
+  "repository_created_before_release": false,
+  "pre_event_materials": [],
+  "sample_data": {
+    "loads_published_fixture": true,
+    "method": "bundled file + file upload + paste JSON",
+    "reset_instructions": "Press the header Reset button (or Verify & Data → Reset to published data) to restore the bundled published fixture and discard imported batches; reloading the page has the same effect because all state is in-memory."
+  },
+  "problem_solving_method": "We encoded every ruling from CLARIFICATIONS.md (R-10, R-11, R-12, R-13, R-29) as isolated pure functions in a deterministic TypeScript engine, built a fail-soft adapter that validates and normalises the official case format (subjects/compulsory/students) without crashing on bad rows, and wrapped it in a trace-first UI: every displayed GPA can be expanded into a step-by-step walkthrough that cites the ruling and the student's real numbers. Because determinism is the problem's defining property, we added a proof layer: a canonical serialisation of the normalised input and every output row is hashed with a self-contained, NIST-vector-verified SHA-256 — the Proof tab re-runs the whole pipeline three times live (byte-identical hashes), and one command (bun scripts/fingerprint.ts PUB-02) reproduces the identical fingerprint from the repository source. The published fixture (25 cases, 1,765 students) ships bundled, judges' hidden cases in the same shape load through the same upload/paste pipeline, and a 114-assertion suite (CLI + in-browser) re-derives the GPA formula for every published student and asserts byte-identical determinism.",
+  "requirements": {
+    "R1": {
+      "status": "complete",
+      "evidence": "Loads published fixture + judge-shaped JSON via upload/paste: src/lib/p08/fixture.ts (parseFixtureInput, normalizeCase, getPublishedFixture); header data bar in src/app/page.tsx; Verify & Data tab in src/components/p08/views-b.tsx"
+    },
+    "R2": {
+      "status": "complete",
+      "evidence": "R-11 subject grading (theory ≥ 25/75, practical ≥ 8/25, either fails → GP 0): src/lib/p08/engine.ts evaluateSubject(); visible in every Student Trace row"
+    },
+    "R3": {
+      "status": "complete",
+      "evidence": "R-12 absence rules (AB ≠ zero; compulsory AB → overall F; optional AB → 0 + checking lists): src/lib/p08/engine.ts; DEMO-EDGE-10 rolls 105 (compulsory AB) and 106 (optional AB — appears on BOTH the absent and optional lists) demonstrate it live"
+    },
+    "R4": {
+      "status": "complete",
+      "evidence": "R-13 GPA formula with 5.00 cap, 2-decimal output, cancellation with visible uncancelled average: src/lib/p08/engine.ts computeStudentResult(); 'GPA walkthrough (R-13)' panel in src/components/p08/views-a.tsx"
+    },
+    "R5": {
+      "status": "complete",
+      "evidence": "R-10 letter grades from final GPA: src/lib/p08/engine.ts letterForGpa(); Results table letter column"
+    },
+    "R6": {
+      "status": "complete",
+      "evidence": "R-29 checking lists (optional GP ≤ 2.0, practical < 8, any AB) with multi-list membership, per-row 'verify by hand' guidance and CSV/print export: src/components/p08/views-b.tsx ListsView + per-student badges"
+    },
+    "R7": {
+      "status": "complete",
+      "evidence": "Per-student calculation trace citing rules with real numbers: src/components/p08/views-a.tsx TraceView + SubjectTrace.ruleText in engine.ts"
+    },
+    "R8": {
+      "status": "complete",
+      "evidence": "114-assertion self-test (boundary vectors, 10 hand-computed edge students, adapter behaviour, NIST SHA-256 vectors, canonical-fingerprint determinism, full re-derivation for 1,765 published students): src/lib/p08/selftest.ts + scripts/verify-p08.ts + in-app Verify & Data tab; plus the Proof tab (fingerprint + recompute ×3 + reproducible CLI) in src/components/p08/proof-view.tsx"
+    }
+  },
+  "team_members": [
+    {
+      "registered_name": "Adil Shamim",
+      "github_username": "AdilShamim8",
+      "major_contribution": "Entire solution: rule engine, fixture adapter, verification suite, UI views, documentation and deployment.",
+      "evidence_paths_or_commits": [
+        "src/lib/p08/engine.ts",
+        "src/lib/p08/fixture.ts",
+        "src/lib/p08/selftest.ts",
+        "src/lib/p08/fingerprint.ts",
+        "src/components/p08/views-a.tsx",
+        "src/components/p08/views-b.tsx",
+        "src/components/p08/proof-view.tsx",
+        "src/components/p08/judge-console.tsx",
+        "src/app/page.tsx",
+        "scripts/verify-p08.ts",
+        "scripts/fingerprint.ts"
+      ]
+    }
+  ],
+  "major_design_decisions": [
+    "Official case format as the app's native input: bundled fixture, file upload and pasted JSON all pass through one validated adapter, so hidden judge cases in the same shape are just another batch.",
+    "Pure deterministic engine with no randomness, dates or network in the calculation path; identical input produces byte-identical export JSON (asserted in the suite).",
+    "Determinism turned into evidence: canonical input/output serialisation + SHA-256 fingerprint (self-contained implementation, asserted against NIST test vectors). The Proof tab recomputes ×3 live and scripts/fingerprint.ts reproduces the identical hash from source, so the deployed app and the shipped code are verifiably the same machine; any single-mark change alters the fingerprint (tamper seal).",
+    "Judge Console (⌘K command palette): judges audit anything in seconds — roll, name, rule id, letter, batch switch, exports, self-test — without clicking through tabs.",
+    "Fail-soft validation: malformed marks never crash a batch — each issue is reported with student/subject scope and the student is still processed deterministically (missing compulsory marks become AB).",
+    "Trace-first UI: the trace cites the ruling id (R-11/R-12/R-13) together with the student's actual numbers so every GPA is auditable without reading code.",
+    "Ten hand-crafted hard-edge students (rolls 101–106 and 201–204 in batch DEMO-EDGE-10) cover every boundary the rules define; each trace carries a 'why this student matters' note with a hand-derivation a judge can follow, presented as deep-linkable Edge Case Files.",
+    "Non-practical subjects use the standard 33/100 pass mark implied by the published grade scale (R-11 defines part pass marks only for split subjects); documented in README Known limitations."
+  ],
+  "known_limitations": [
+    "Full-subject (non-practical) pass mark assumed 33/100 from the standard scale; a hidden case expecting a different value would need the one-line constant changed in engine.ts.",
+    "GPA divisor fixed at 6 per R-13 regardless of a case's compulsory-subject count (published cases always list six).",
+    "Practical-fail list counts only subjects the student sat; AB in a practical subject places the student on the absent list instead.",
+    "Exports cover the current batch only; no multi-batch combined export.",
+    "English-only UI; no Bangla localisation."
+  ],
+  "ai_tools_used": [
+    {
+      "tool": "Super Z (GLM, Z.ai) AI coding assistant",
+      "used_for": "Accelerated implementation of the engine, fixture adapter, UI views, test suite and documentation during the event window.",
+      "how_output_was_verified": "Every rule cross-checked against CLARIFICATIONS.md; 114 hand-computed assertions pass in CLI and in-browser (including NIST SHA-256 vectors and canonical-fingerprint determinism); boundary students (e.g. PUB-02/S001: Σ 22 + bonus 2 → raw 4.00, cancelled 0.00/F) re-derived manually; the browser fingerprint for PUB-02 (d2dd6c7a6cbc8e4a…) matches scripts/fingerprint.ts output exactly."
+    }
+  ],
+  "licenses_file": "LICENSES.md",
+  "declaration": "The information above is complete and truthful to the best of the team's knowledge."
+}
